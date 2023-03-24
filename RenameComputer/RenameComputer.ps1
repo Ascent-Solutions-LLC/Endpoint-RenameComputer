@@ -41,6 +41,7 @@ Version 1.0: Initial version.
 
 Param()
 
+$Prefix = "AP-"
 
 # If we are running as a 32-bit process on an x64 system, re-launch as a 64-bit process
 if ("$env:PROCESSOR_ARCHITEW6432" -ne "ARM64")
@@ -84,10 +85,20 @@ if ($dcInfo.dnsHostName -eq $null)
     $goodToGo = $false
 }
 
+# Make sure WMI property has value
+$Property = "SMSBIOSAssetTag" # Options are "SMSBIOSAssetTag" or "SerialNumber"
+$tag = (Get-WmiObject Win32_SystemEnclosure).$Property
+if ($tag -eq $null)
+{
+    Write-Host "WMI Property $Property is null, set Asset Tag in BIOS or change property to SerialNumber"
+    $goodToGo = $false
+}
+
 if ($goodToGo)
 {
     # Get the new computer name
-    $newName = Invoke-RestMethod -Method GET -Uri "https://generatename.azurewebsites.net/api/HttpTrigger1?prefix=AD-"
+    #$newName = Invoke-RestMethod -Method GET -Uri "https://generatename.azurewebsites.net/api/HttpTrigger1?prefix=AD-"
+    $newName = "$Prefix$tag"
 
     # Set the computer name
     Write-Host "Renaming computer to $($newName.name)"
